@@ -9,22 +9,30 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Exercise 01
+### Calculating error terms by hand
+$$\begin{eqnarray}
+MSE & = & \frac{1}{5}\sum_{i=1}^5(y_i - \hat{y_i})^2 \\
+& = & \frac{1}{5}((1-2)^2 + (2-2)^2 + (3-1)^2 + (4-8)^2 + (5-4)^2) \\
+& = & 4.4
+\end{eqnarray}$$
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+$$\begin{eqnarray}
+RMSE & = & \sqrt{\frac{1}{5}\sum_{i=1}^5(y_i - \hat{y_i})^2} \\
+& = & \sqrt{\frac{1}{5}((1-2)^2 + (2-2)^2 + (3-1)^2 + (4-8)^2 + (5-4)^2)} \\
+& = & 2.10
+\end{eqnarray}$$
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+$$\begin{eqnarray}
+MAE & = & \frac{1}{5}\sum_{i=1}^5|y_i - \hat{y_i}| \\
+& = & \frac{1}{5}(|1-2| + |2-2| + |3-1| + |4-8| + |5-4|) \\
+& = & 1.6
+\end{eqnarray}$$
 
-```{r cars}
-summary(cars)
-```
+As compared to MAE, RMSE puts more emphasis on outliers (i.e. predictions with errors of greater magnitude). This is due to the fact that RMSE first squares the difference between the actual and predicted values so gives greater weight to outliers, whereas MAE takes the absolute value of the differences rather than squaring. 
 
-## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
