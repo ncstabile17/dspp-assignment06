@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
 ```
 
 ## Exercise 01
@@ -34,7 +35,9 @@ As compared to MAE, RMSE puts more emphasis on outliers (i.e. predictions with e
 ## Exercise 02
 
 ### 1. Confusion matrix
-
+```{r, out.width = "50%"}
+include_graphics("confusion-matrix-assignment06e02.JPG")
+```
 
 ### 2. Accuracy
 $$\begin{eqnarray}
