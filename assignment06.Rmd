@@ -31,8 +31,31 @@ MAE & = & \frac{1}{5}\sum_{i=1}^5|y_i - \hat{y_i}| \\
 
 As compared to MAE, RMSE puts more emphasis on outliers (i.e. predictions with errors of greater magnitude). This is due to the fact that RMSE first squares the difference between the actual and predicted values so gives greater weight to outliers, whereas MAE takes the absolute value of the differences rather than squaring. 
 
+## Exercise 02
+
+### 1. Confusion matrix
 
 
+### 2. Accuracy
+$$\begin{eqnarray}
+Accuracy & = & \frac{True Positive + True Negative}{Total} \\
+& = & \frac{3 + 4}{10} \\
+& = & 0.7
+\end{eqnarray}$$
+
+### 3. Precision
+$$\begin{eqnarray}
+Precision & = & \frac{True Positive}{True Positive + False Positive} \\
+& = & \frac{3}{3 + 1} \\
+& = & 0.75
+\end{eqnarray}$$
+
+### 4. Recall/Sensitivity
+$$\begin{eqnarray}
+Precision & = & \frac{True Positive}{True Positive + False Negative} \\
+& = & \frac{3}{3 + 2} \\
+& = & 0.6
+\end{eqnarray}$$
 
 
 
