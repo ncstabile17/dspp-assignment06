@@ -11,7 +11,7 @@ library(knitr)
 ```
 
 ## Exercise 01
-### Calculating error terms by hand
+
 $$\begin{eqnarray}
 MSE & = & \frac{1}{5}\sum_{i=1}^5(y_i - \hat{y_i})^2 \\
 & = & \frac{1}{5}((1-2)^2 + (2-2)^2 + (3-1)^2 + (4-8)^2 + (5-4)^2) \\
@@ -60,5 +60,20 @@ Precision & = & \frac{True Positive}{True Positive + False Negative} \\
 & = & 0.6
 \end{eqnarray}$$
 
+## Exercise 03
+
+### 1. Confusion Matrix
+```{r, out.width = "50%"}
+include_graphics("confusion-matrix-assignment06e03.jpg")
+```
+
+### 2. Accuracy
+$$\begin{eqnarray}
+Accuracy & = & \frac{True Positive + True Negative}{Total} \\
+& = & \frac{7 + 1 + 2}{15} \\
+& = & 0.67
+\end{eqnarray}$$
+
+## Exercise 04
 
 
