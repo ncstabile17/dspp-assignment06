@@ -75,5 +75,11 @@ Accuracy & = & \frac{True Positive + True Negative}{Total} \\
 \end{eqnarray}$$
 
 ## Exercise 04
+In the first scenario, you would be able to achieve an accuracy of .51 by guessing 1 for all values (i.e. correctly predicting all observations that have 1 as their value).
+
+In the second scenario, you would be able to achieve an accuracy of .99 by guessing 0 for every observation (i.e. correctly predicting all observations that have 0 as their value). 
+
+Context matters for accuracy because it does not tell a complete story on its own. For example, your model may be very accurate at predicting one outcome, but terrible at another and this may not be obvious from the overall accuracy metric especially if there is high class imbalance. This is particularly important if you care more about the predictive accuracy for some outcomes than others. 
+
 
 
