@@ -8,6 +8,9 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
+library(tidymodels)
+library(tidyverse)
+library(parsnip)
 ```
 
 ## Exercise 01
@@ -81,5 +84,147 @@ In the second scenario, you would be able to achieve an accuracy of .99 by guess
 
 Context matters for accuracy because it does not tell a complete story on its own. For example, your model may be very accurate at predicting one outcome, but terrible at another and this may not be obvious from the overall accuracy metric especially if there is high class imbalance. This is particularly important if you care more about the predictive accuracy for some outcomes than others. 
 
+## Exercise 05
+
+1. Divide the marbles data set into a training set with 80% of observations and a testing set 20% of observations. Set the seed to 20200229 before sampling.
+
+```{r}
+
+marbles_data <- read.csv("marbles.csv")
+
+set.seed(20200229)
+
+# create a split object
+marbles_split <- initial_split(data = marbles_data, prop = 0.8)
+
+# create the training and testing data
+marbles_train <- training(x = marbles_split)
+marbles_test <- testing(x = marbles_split)
+
+```
+
+2. Use count() and library(ggplot2) to develop and justify a intuitive/mental model for predicting black marbles.
+
+```{r}
+
+marbles_train %>% 
+  count(color, size) %>% 
+  ggplot() + 
+  geom_col(mapping = aes(x = color, y = n, fill = size), position=position_dodge())
+
+marbles_train %>% 
+  count(color, size) %>% 
+  ggplot() + 
+  geom_col(mapping = aes(x = size, y = n, fill = color), position=position_dodge())
+
+```
+
+The simplest mental model for predicting black marbles is to predict that big marbles are black and small marbles are white. The majority of big marbles are black, and the majority of small marbles are white. 
 
 
+3. Construct a custom function that takes a vector of sizes and returns a vector of predicted colors. Apply it to the testing data.
+
+```{r}
+
+predict_color <- function(.sizes) {
+  predicted_colors <- c()
+  for(i in 1:length(.sizes))
+  {
+    if(.sizes[i] == "big") {
+      predicted_colors <- append(predicted_colors, "black")
+    }
+    else {
+      predicted_colors <- append(predicted_colors, "white")
+    }
+  }
+  return(predicted_colors)
+}
+
+predict_color(marbles_test$size)
+```
+
+
+4. Construct a custom function that takes y and y_hat that returns calculated accuracy and returns a confusion matrix. Use list() inside of return() to return more than one object. Apply it to the data from part 3. Do not use yardstick::conf_mat() or caret::confusionMatrix().
+
+```{r}
+cust_conf_matrix <- function(.y, .y_hat) {
+  
+  true_positive <- 0
+  false_positive <- 0
+  true_negative <- 0
+  false_negative <- 0
+  
+  for(i in 1:length(.y))
+  {
+    if(.y[i] == "black" & .y_hat[i] == "black") {
+      true_positive <- true_positive + 1
+    }
+    else if (.y[i] == "white" & .y_hat[i] == "black"){
+      false_positive <- false_positive + 1
+    }
+    else if (.y[i] == "white" & .y_hat[i] == "white"){
+      true_negative <- true_negative + 1
+    }
+    else if (.y[i] == "black" & .y_hat[i] == "white"){
+      false_negative <- false_negative + 1
+    }
+  }
+  
+  predict_accuracy <- (true_positive + true_negative)/(true_positive + true_negative + false_negative + false_positive)
+  
+  conf_matrix <- matrix(c(true_positive, false_positive, false_negative, true_negative),ncol=2,byrow=TRUE)
+  colnames(conf_matrix) <- c("y = black","y = white")
+  rownames(conf_matrix) <- c("y_hat = black","y_hat = white")
+  conf_matrix <- as.table(conf_matrix)
+  
+  return(list(predict_accuracy, conf_matrix))
+  
+}
+
+predicted_colors <- predict_color(marbles_test$size)
+cust_conf_matrix(marbles_test$color, predicted_colors)
+
+
+```
+
+5. Using the same testing and training data, estimate a decision tree/CART model with functions from library(parnsip). Use the “rpart” engine.
+
+```{r}
+
+
+# create the model object
+predict_color_cart_mod <-
+  decision_tree() %>%
+  set_engine(engine = "rpart") %>%
+  set_mode(mode = "classification")
+
+# fit the model
+predict_color_cart_fit <- predict_color_cart_mod %>%
+  fit(formula = as.factor(color) ~ ., data = marbles_train)
+
+# visualize the decision tree
+rpart.plot::rpart.plot(x = predict_color_cart_fit$fit)
+
+```
+
+
+
+6. Does the decision tree/CART model generate the same predictions on the testing data as the model from part 2? Why or why not?
+
+```{r}
+
+# use the model to get the predictions on the test data
+color_predictions <- bind_cols(
+  marbles_test,
+  predict(object = predict_color_cart_fit, new_data = marbles_test)
+)
+
+# calculate the accuracy from the model predictions
+accuracy(data = color_predictions,
+         truth = as.factor(color),
+         estimate = as.factor(.pred_class))
+
+all.equal(as.factor(color_predictions$.pred_class), as.factor(predicted_colors))
+```
+
+Yes! The decision tree model produces the same predictions and the same accuracy on the testing data as the model from part 2 because it uses the same logic. Based on the data available, the best decision tree model available relied on the same test as the intuitive model: if the marble is big, predict black; if the marble is small, predict white.
