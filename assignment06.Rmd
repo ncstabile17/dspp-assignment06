@@ -1,7 +1,7 @@
 ---
 title: "Assignment 06"
 author: "Nick Stabile"
-date: "10/18/2020"
+date: "10/26/2020"
 output: html_document
 ---
 
@@ -228,3 +228,107 @@ all.equal(as.factor(color_predictions$.pred_class), as.factor(predicted_colors))
 ```
 
 Yes! The decision tree model produces the same predictions and the same accuracy on the testing data as the model from part 2 because it uses the same logic. Based on the data available, the best decision tree model available relied on the same test as the intuitive model: if the marble is big, predict black; if the marble is small, predict white.
+
+## Exercise 06
+
+```{r}
+
+set.seed(20200302)
+
+# input the data
+rats <- tribble(
+  ~rat_burrow, ~distance,
+  1, 0.01,
+  1, 0.05,
+  1, 0.08,
+  0, 0.1,
+  0, 0.12,
+  1, 0.2,
+  1, 0.3,
+  1, 0.5,
+  1, 0.75,
+  0, 0.9,
+  1, 1,
+  0, 1.2,
+  0, 2.2,
+  0, 2.3,
+  0, 2.5,
+  1, 3,
+  0, 3.5,
+  0, 4,
+  0, 5,
+  0, 7
+) %>%
+  mutate(rat_burrow = factor(rat_burrow))
+
+#
+split <- initial_split(rats, prop = 0.75)
+rats_training <- training(split)
+rats_testing <- testing(split)
+
+rats_k1 <- vfold_cv(data = rats_training, 
+                    v = 3)
+rats_k3 <- vfold_cv(data = rats_training,
+                    v = 3)
+rats_kn <- vfold_cv(data = rats_training,
+                    v = 3)
+```
+
+```{r}
+
+# Extract analysis and assessment data from first resamples 
+rats_k1_analysis1 <- training(rats_k1$splits[[1]])
+rats_k1_assess1 <- testing(rats_k1$splits[[1]])
+
+rats_k3_analysis1 <- training(rats_k3$splits[[1]])
+rats_k3_assess1 <- testing(rats_k3$splits[[1]])
+
+rats_kn_analysis1 <- training(rats_kn$splits[[1]])
+rats_kn_assess1 <- testing(rats_kn$splits[[1]])
+
+```
+
+1. Calculate y_hat for the assessment data in the first resample of rats_k1 with k = 1.
+```{r}
+# This can be done by just looking at which observation is closest in the analysis data
+# In the case of a tie (same distance from 2 observations in analysis) I chose randomly
+
+# .01 closest to .05 -> 1
+# .10 closest to .08 and .12, randomly choose .08 as closest -> 1
+# .90 closest to 1.00 -> 1
+# 2.30 closest to 2.20 -> 0
+# 2.50 closes to 2.20 -> 0
+y_hat_k1 <- data.frame("y_hat" = c(1, 1, 1, 0, 0))
+rats_k1_assess1 <- bind_cols(rats_k1_assess1, y_hat_k1)
+knitr::kable(rats_k1_assess1)
+cust_conf_matrix(rats_k1_assess1$rat_burrow, rats_k1_assess1$y_hat)
+
+```
+
+2. Calculate y_hat for the assessment data in the first resample of rats_k3 with k = 3.
+```{r}
+# For this we'll want to find the three closest and use voting to determine the value of y_hat
+
+# .01 closest to (1, 0.05), (1, .08), and (0, .12) -> 1
+# .10 closest to (1, 0.05), (1, .08), and (0, .12) -> 1
+# .20 closest to (1, 0.05), (1, .08), and (0, .12) -> 1
+# .75 closest to (0, .90), (1, 1.00), and (0, 1.20) -> 0
+# 3.50 closest to (0, 2.20), (1, 2.30), and (0, 2.50) -> 0
+y_hat_k3 <- data.frame("y_hat" = c(1, 1, 1, 0, 0))
+rats_k3_assess1 <- bind_cols(rats_k3_assess1, y_hat_k3)
+knitr::kable(rats_k3_assess1)
+
+```
+
+3. Calculate y_hat for the assessment data in the first resample of rats_kn with k = n.
+```{r}
+# In this case, since k = n then y_hat is always the mode of y from the analysis data 
+
+y_hat_kn <- data.frame("y_hat" = c(0, 0, 0, 0, 0))
+rats_kn_assess1 <- bind_cols(rats_kn_assess1, y_hat_kn)
+knitr::kable(rats_kn_assess1)
+
+```
+
+The k = n model was easiest to estimate computationally because the prediction was all the same since you were looking at all observations for each of them (i.e. the prediction was the mode every time). It was computationally the hardest to do k = 3 because you had to do more comparisons and calculations than for k = 1 where you could just compare with the closest observation. 
+
