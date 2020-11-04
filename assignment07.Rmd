@@ -103,11 +103,36 @@ predict_grade_cart_fit <-
   predict_grade_cart_workflow %>% 
   fit(data = restaurant_grades_train)
 
+```
 
+### 2. Evaluate the model
 
+```{r}
 
+# use the model to get the predictions on the test data
+grade_predictions <- bind_cols(
+  restaurant_grades_test,
+  predict(object = predict_grade_cart_fit, new_data = restaurant_grades_test)
+)
 
+# create a confusion matrix based on predictions of test data
+grade_pred_conf_matrix <- table(grade_predictions$.pred_class, grade_predictions$grade)
 
+grade_pred_conf_matrix
 
+# Calculate precision and recall/sensitivity "by hand"
+grade_pred_precision <- grade_pred_conf_matrix[1]/(grade_pred_conf_matrix[1] + grade_pred_conf_matrix[3])
+grade_pred_precision
+
+grade_pred_recall <- grade_pred_conf_matrix[1]/(grade_pred_conf_matrix[1] + grade_pred_conf_matrix[2])
+grade_pred_recall
+
+# Calculate precision and recall/sensitivity with tidymodels
+precision(data = grade_predictions, truth = grade, estimate = .pred_class)
+
+recall(data = grade_predictions, truth = grade, estimate = .pred_class)
 
 ```
+c. The precision and recall calculated "by hand" match the values for precision and recall calculated using the tidymodels functions.
+
+d. The model is very precise, with over 99% precision, meaning that it's almost almost correct when it predicts a restaurant will have an A grade. The model does somewhat worse on recall, with around 81% sensitivity, meaning that when the grade should be an A, there is about a 20% chance the model will predict Not A. In this sense it is a somewhat conservative model: it does not predict an A grade when it shouldn't (false positive), but it occasionally fails to predict A when it should have (false negative). This is probably a good thing for restaurant patrons since it is overly protective of their health, but would harm the marginal restaurant owner who should be receiving an A grade, but is not.
