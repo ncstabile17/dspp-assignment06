@@ -157,4 +157,116 @@ For this model, the vast majority of importance comes from the top 3 variables: 
 ### 5. Application
 
 a. How might this model be used by an ombudsman working for the NYC health department?
-This model could be used by the NYC health department to help allocate resources to prioritize health inspections for restaurants that are more likely to have a grade of Not A. It could als 
+This model could be used by the NYC health department to help allocate resources to prioritize health inspections for restaurants that are more likely to have a grade of Not A. It could also be used to predict the likelihood of a new restaurant receiving a grade of Not A or A. Further, the variable importance metric indicates that the inspection type is the most important predictive factor for the grade so this could provide a clue for additional study and investigation.
+
+## Exercise 02
+
+```{r}
+
+# creating a subset of the diamonds data set
+set.seed(20200301)
+
+diamonds_sample <- diamonds %>%
+  sample_n(5000) %>%
+  select(price, carat, x, y, z)
+
+```
+
+### 1. Estimation
+
+```{r}
+
+set.seed(20200302)
+
+# create a split object
+diamonds_split <- initial_split(data = diamonds_sample, prop = 0.8)
+
+# create the training and testing data
+diamonds_train <- training(x = diamonds_split)
+diamonds_test <- testing(x = diamonds_split)
+
+# create recipe and normalize variables
+predict_price_recipe <-
+  recipe(formula = price ~ ., data = diamonds_train) %>%
+  step_normalize(carat, x, y, z)
+
+# create resamples
+diamonds_folds <- vfold_cv(data = diamonds_train, v = 10)
+
+# create model objects
+predict_price_knn_mod <-
+  nearest_neighbor(neighbors = tune()) %>%
+  set_engine(engine = "kknn") %>%
+  set_mode(mode = "regression")
+
+predict_price_lreg_mod <- 
+  linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression")
+
+# create workflows
+knn_workflow <-
+  workflow() %>%
+  add_model(spec = predict_price_knn_mod) %>%
+  add_recipe(recipe = predict_price_recipe)
+
+lreg_workflow <-
+  workflow() %>%
+  add_model(spec = predict_price_lreg_mod) %>%
+  add_recipe(recipe = predict_price_recipe)
+
+# create tuning grid for knn hyperparameters
+knn_grid <- tibble(neighbors = c(3, 7, 11))
+
+# estimate models
+predict_price_knn_res <-
+  knn_workflow %>%
+  tune_grid(resamples = diamonds_folds,
+            grid = knn_grid,
+            control = control_grid(save_pred = TRUE),
+            metrics = metric_set(rmse))
+
+predict_price_lreg_fit_rs <-
+  lreg_workflow %>%
+  fit_resamples(resamples = diamonds_folds)
+
+```
+
+### 2. Evaluation
+```{r}
+collect_metrics(predict_price_knn_res)
+collect_metrics(predict_price_lreg_fit_rs)
+
+lreg_metrics <- collect_metrics(predict_price_lreg_fit_rs, summarize = FALSE) %>%
+  filter(.metric == "rmse") %>% 
+  mutate(.config = "Lin Reg")
+
+knn_metrics <- collect_metrics(predict_price_knn_res, summarize = FALSE) %>%
+  filter(.metric == "rmse")
+
+combined_metrics <- bind_rows(lreg_metrics, knn_metrics)
+
+combined_metrics %>% 
+  ggplot() +
+  geom_line(aes(id, .estimate, group = .config, color = .config)) +
+  geom_point(aes(id, .estimate, group = .config)) +
+  scale_y_continuous() +
+  scale_color_discrete(name = "Model", labels = c("Lin Reg", "KNN 3", "KNN 7", "KNN 11")) +
+  labs(title = "Calculated RMSE Across the 10 Folds",
+       y = "RMSE_hat",
+       x = "Fold") +
+  theme_minimal()
+
+combined_metrics %>% 
+  group_by(.config) %>% 
+  summarize(mean(.estimate)) 
+
+```
+The average RMSE for each of the models is as follows:
+Lin Reg:	1433.010			
+KNN k = 3:	1585.314			
+KNN k = 7:	1434.576			
+KNN k = 11:	1394.683	
+
+### 3. Prediction
+
