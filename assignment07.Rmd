@@ -270,3 +270,33 @@ KNN k = 11:	1394.683
 
 ### 3. Prediction
 
+```{r}
+
+# create model object
+predict_price_knn_best_mod <-
+  nearest_neighbor(neighbors = 11) %>%
+  set_engine(engine = "kknn") %>%
+  set_mode(mode = "regression")
+
+# create workflow
+knn_best_workflow <-
+  workflow() %>%
+  add_model(spec = predict_price_knn_best_mod) %>%
+  add_recipe(recipe = predict_price_recipe)
+
+# fit model
+predict_price_best_fit <- 
+  knn_best_workflow %>% 
+  fit(data = diamonds_train)
+
+# make predictions with testing data
+knn_best_predictions <-
+  bind_cols(
+    diamonds_test,
+    predict(object = predict_price_best_fit, new_data = diamonds_test)
+  )
+
+# calculate the rmse for the testing data
+rmse(data = knn_best_predictions, truth = price, estimate = .pred)
+
+```
