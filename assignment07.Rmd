@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lubridate)
 library(tidymodels)
+library(vip)
 ```
 
 ## Exercise 01
@@ -136,3 +137,24 @@ recall(data = grade_predictions, truth = grade, estimate = .pred_class)
 c. The precision and recall calculated "by hand" match the values for precision and recall calculated using the tidymodels functions.
 
 d. The model is very precise, with over 99% precision, meaning that it's almost almost correct when it predicts a restaurant will have an A grade. The model does somewhat worse on recall, with around 81% sensitivity, meaning that when the grade should be an A, there is about a 20% chance the model will predict Not A. In this sense it is a somewhat conservative model: it does not predict an A grade when it shouldn't (false positive), but it occasionally fails to predict A when it should have (false negative). This is probably a good thing for restaurant patrons since it is overly protective of their health, but would harm the marginal restaurant owner who should be receiving an A grade, but is not.
+
+### 3. Improvement
+
+The model is quite precise, but could at least improve its recall (among other metrics) so we would want to make improvements that would ideally reduce false negatives by providing more information to correctly classify restaurants that should've been given an A grade but were not. More information about a restaurant owner's history could be potentially useful: grades from previous years or grades from additional or previous restaurants may be helpful in predicting the current restaurant grade. Additionally, having more specific and descriptive location information (i.e. combining lat/lon to determine relative distance) could help in predicting pockets of restaurants that may receive failing grades because of environmental conditions like the presence of vermin. Experimenting with different algorithms could also be a source of improvement including using a random forest algorithm, which is typically more accurate and still slightly interpretable.
+
+### 4. Variable Importance
+
+```{r}
+predict_grade_cart_fit %>% 
+  pull_workflow_fit() %>%
+  vip(num_features = 10)
+```
+
+In CART decision tree models, for each split in the tree the model picks the most efficient predictor or variable to split the data, or the one that reduces misclassification the most/improves the model the most as compared to all other options. Calculating variable importance then requires comparing how often variables are used to perform that split and how relatively valuable that split was in improving the model/reducing error.
+
+For this model, the vast majority of importance comes from the top 3 variables: inspection_type, inspection_date, and census_tract. And of those, inspection_type is by far the most important variable with over twice as much importance as inspection_date and census_tract. Only 7 variables have a non-zero importance with longitude only barely having any relative importance. 
+
+### 5. Application
+
+a. How might this model be used by an ombudsman working for the NYC health department?
+This model could be used by the NYC health department to help allocate resources to prioritize health inspections for restaurants that are more likely to have a grade of Not A. It could als 
