@@ -156,8 +156,7 @@ For this model, the vast majority of importance comes from the top 3 variables: 
 
 ### 5. Application
 
-a. How might this model be used by an ombudsman working for the NYC health department?
-This model could be used by the NYC health department to help allocate resources to prioritize health inspections for restaurants that are more likely to have a grade of Not A. It could also be used to predict the likelihood of a new restaurant receiving a grade of Not A or A. Further, the variable importance metric indicates that the inspection type is the most important predictive factor for the grade so this could provide a clue for additional study and investigation.
+a. This model could be used by the NYC health department to help allocate resources to prioritize health inspections for restaurants that are more likely to have a grade of Not A. It could also be used to predict the likelihood of a new restaurant receiving a grade of Not A or A. Further, the variable importance metric indicates that the inspection type is the most important predictive factor for the grade so this could provide a clue for additional study and investigation.
 
 ## Exercise 02
 
@@ -263,6 +262,7 @@ combined_metrics %>%
 
 ```
 The average RMSE for each of the models is as follows:
+
 Lin Reg:	1433.010			
 KNN k = 3:	1585.314			
 KNN k = 7:	1434.576			
@@ -297,6 +297,87 @@ knn_best_predictions <-
   )
 
 # calculate the rmse for the testing data
-rmse(data = knn_best_predictions, truth = price, estimate = .pred)
+rmse(data = knn_best_predictions, 
+     truth = price, 
+     estimate = .pred)
 
 ```
+## Exercise 03
+
+### 1. Set up
+The data set is the same one used for Assignment 04, and includes information on economic development investments from across a variety of agencies and programs in the DC government for FY15-19. The data set was created by DMPED as required by the Economic Development Return on Investment Accountability Amendment Act of 2018. Fore more information see DMPED's [FY19 Economic Development Return on Investment Accountability Report](https://dmped.dc.gov/sites/default/files/dc/sites/dmped/publication/attachments/FY19%20ED%20Return%20on%20Investment%20Accountability%20Report.pdf).
+
+The goal of this supervised machine learning application is to predict the total DC government investment in a given project based on project factors including affordable housing units, affordability levels, number of bedrooms, and others. This could be used by District government employees to estimate how much they should expect to contribute for future projects. It could also be used by advocates to flag potentially suspicious allocations of funds based on the expected level of government contribution. 
+
+### Data Cleaning
+```{r warning = FALSE, message = FALSE, results = FALSE}
+
+# Making the variable names easier to work with 
+dc_housing_investment <- read_csv("data/dc-housing-investment.csv") %>% 
+  rename(
+    year = `FY`,
+    incentive_name = `Incentive Name`,
+    recipient_name = `Recipient Name`,
+    incentive_amount = `Incentive Amount`, 
+    investment_address = `MAR Address of Investment`,
+    ward = `MAR_Ward`,
+    ami_30 = `30% AMI`,
+    ami_50 = `50% AMI`,
+    ami_60 = `60% AMI`,
+    ami_80 = `80% AMI`,
+    total_affordable = `Total Affordable Units Produced or Preserved`,
+    one_br = `1 BRs`,
+    two_br = `2 BRs`,
+    three_br = `3 BRs`,
+    four_plus_br = `4+ BRs`,
+    studios = `Efficiency`,
+    district_employed = `Number of District Residents Employed`,
+    num_cbe = `Number of CBEs`,
+    ) %>% 
+  # Ensuring variables are consistent and converting to numeric
+  # Note that the "HFA Revenue Bond Issuance" was renamed to "HFA Revenue Bond" in 2019 so this code makes all years consistent
+  mutate(
+    investment_address = str_to_upper(investment_address),
+    ami_30 = as.numeric(ami_30),
+    ami_50 = as.numeric(ami_50),
+    ami_60 = as.numeric(ami_60),
+    ami_80 = as.numeric(ami_80),
+    total_affordable = as.numeric(total_affordable),
+    one_br = as.numeric(one_br),
+    two_br = as.numeric(two_br),
+    three_br = as.numeric(three_br),
+    four_plus_br = as.numeric(four_plus_br),
+    studios = as.numeric(studios),
+    district_employed = as.numeric(district_employed),
+    num_cbe = as.numeric(num_cbe),
+    incentive_name=replace(incentive_name, incentive_name=="HFA Revenue Bond Issuance", "HFA Revenue Bond"),
+  )
+
+# Some projects (denoted by address) had multiple investments from different programs so we want to know the total investment for each project
+# There is probably a more efficient way to add this variable 
+total_proj_data <- dc_housing_investment %>% 
+  group_by(investment_address) %>% 
+  summarize(total_proj_investment = sum(incentive_amount))
+
+dc_housing_investment <- 
+  left_join(dc_housing_investment, total_proj_data, by = "investment_address")
+
+# Also probably a more efficient way to do this, but this removes any economic development incentives that did not produce any affordable housing units across the data set and consolidates investments that are at the same address 
+min_affordable_units <- dc_housing_investment %>% 
+  group_by(incentive_name) %>% 
+  summarize(incentive_total_affordable = sum(total_affordable, na.rm = TRUE)) %>% 
+  filter(incentive_total_affordable > 0) %>% 
+  pull(incentive_name)
+
+dc_housing_investment <- dc_housing_investment %>% 
+  filter(incentive_name %in% min_affordable_units) %>% 
+  distinct(investment_address, .keep_all= TRUE) %>% 
+  filter(!is.na(total_affordable))
+
+```
+
+
+
+### Exploratory Data Analysis
+
+
