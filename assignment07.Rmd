@@ -302,7 +302,7 @@ rmse(data = knn_best_predictions,
      estimate = .pred)
 
 ```
-## Exercise 03
+## Exercise 03: Supervised ML Option
 
 ### 1. Set up
 The data set is the same one used for Assignment 04, and includes information on economic development investments from across a variety of agencies and programs in the DC government for FY15-19. The data set was created by DMPED as required by the Economic Development Return on Investment Accountability Amendment Act of 2018. Fore more information see DMPED's [FY19 Economic Development Return on Investment Accountability Report](https://dmped.dc.gov/sites/default/files/dc/sites/dmped/publication/attachments/FY19%20ED%20Return%20on%20Investment%20Accountability%20Report.pdf).
@@ -372,7 +372,8 @@ min_affordable_units <- dc_housing_investment %>%
 dc_housing_investment <- dc_housing_investment %>% 
   filter(incentive_name %in% min_affordable_units) %>% 
   distinct(investment_address, .keep_all= TRUE) %>% 
-  filter(!is.na(total_affordable))
+  filter(!is.na(total_affordable)) %>% 
+  replace_na(list(total_affordable = 0, ami_30 = 0, ami_50 = 0, ami_60 = 0, ami_80 = 0, one_br = 0, two_br = 0, three_br = 0, four_plus_br = 0, studios = 0))
 
 ```
 
@@ -512,7 +513,7 @@ Predictor variables:
 
 **Model 3**
 
-This model specification will use a Random Forest algorithm. So that observations are not ignored, all variables will have missing values imputed as part of the preprocessing. The hyperparameter for number of trees will be tuned to determine the optimal number of trees. 
+This model specification will use a Random Forest algorithm. So that observations are not ignored, all variables will have missing values imputed as part of the preprocessing. The hyperparameter for number of trees will be tuned to determine the optimal number of trees.
 
 Predictor variables: 
 
@@ -533,6 +534,51 @@ Predictor variables:
 
 ### 3. Estimation
 
+```{r}
 
+# create recipe and normalize variables
+predict_investment_recipe <-
+  recipe(formula = total_proj_investment ~ total_affordable + ami_30 + ami_50 + ami_60 + ami_80 + one_br + two_br + three_br + four_plus_br + studios,
+         data = housing_investment_train) %>%
+  step_normalize(total_affordable, ami_30, ami_50, ami_60, ami_80, one_br, two_br, three_br, four_plus_br, studios)
+
+# create resamples
+housing_investment_folds <- vfold_cv(data = housing_investment_train, v = 10)
+
+# create model object
+predict_investment_knn_mod <-
+  nearest_neighbor(neighbors = tune()) %>%
+  set_engine(engine = "kknn") %>%
+  set_mode(mode = "regression")
+
+# create workflow
+investment_knn_workflow <-
+  workflow() %>%
+  add_model(spec = predict_investment_knn_mod) %>%
+  add_recipe(recipe = predict_investment_recipe)
+
+# create tuning grid for knn hyperparameters
+investment_knn_grid <- tibble(neighbors = c(1, 3, 7, 9, 11, 13))
+
+# estimate models
+predict_investment_knn_res <-
+  investment_knn_workflow %>%
+  tune_grid(resamples = housing_investment_folds,
+            grid = investment_knn_grid,
+            control = control_grid(save_pred = TRUE),
+            metrics = metric_set(rmse))
+
+collect_metrics(predict_investment_knn_res)
+```
+### 4. Interpretation
+a. The average RMSE across the training resamples ranged from just under 15,000,000 to just over 19,000,000 with the average RMSE decreasing with increasing values of K. This means that when predicting total project investment, the best model for the first specification was off by about $15M on average. 
+
+b. Based purely on the general accuracy of the two algorithms, the second specification will likely be worse than the first specification because typically KNN is more accurate than decision trees. The second specification will be able to incorporate categorical variables including the incentive name and the Ward that the project is located in, which were not included in the first specification. Intuitively, you might expect these variables to play an important role in project investment, but based on the exploratory data analysis, there does not seem to be a strong relationship so I would not expect these additional variables to make that much of a difference. 
+
+c. Again, based on the algorithm, I would expect the third specification to outperform the first specification because random forest models are typically more accurate than KNN. Similar to the second specification, the third specification may also benefit slightly from the additional variables that were not included in the first specification because they were categorical and I wanted to slightly cut down on dimensionality for the KNN specification. Another advantage of the random forest specification is that it might be interesting and useful to create a variable importance plot, which would help to explain the features that play the biggest role in predicting total project investment. 
+
+d. I don't feel like I have a great handle on the ways that different preprocessing and feature engineering are best utilized in the modeling process. To improve the model, I would spend more time digging into the data set and understanding the ways that I could use feature engineering techniques to improve the model's accuracy. I would also add additional data from other sources that could play an important role in project investment. For example, I would want to add information on the number of market-rate housing units in each project since market-rate units can be used to cross-subsidize affordable units and therefore might lead to less of a need for government investment. More information on localized land values would also be useful as it's likely that projects located in areas with higher land values would require more government investment. Although this might be captured to some degree by project Ward location, more specific land value information could be useful.
+
+e. For the first specification, the optimal K was 13 with an average RMSE of 14,891,041. As previously mentioned, most of the observations had a true value for total project investment of less than 5,000,000 so this indicates that on average the model would not be very accurate for projects with lower levels of investment. This RMSE value, however, is lower than the standard deviation for the training data and is relatively good in comparison to the total range of values for project investment. In concrete terms, though, being off by almost $15M is not very useful in the context of how this model would be used, unless you're talking about the most expensive projects. 
 
 
