@@ -466,7 +466,7 @@ housing_investment_train %>%
 ```
 Since this is a regression application with a continuous target variable, I will be using root mean square error (RMSE) as my error metric. As compared to mean absolute error RMSE will give somewhat more weight to outliers. 
 
-The standard deviation of the total project investment is quite high while the distribution is right skewed. The costs of an error depend on the context in which the model is being used. If the model is the only thing being used to project costs and investment for affordable housing then errors could be quite costly since there are limited funds for affordable housing and this is a crucial expenditure for the well-being of many DC residents. If the model is simply being used as one tool for analysis and more as a check on the reasonableness of investment then errors will be less costly. Regardless, given that most projects fall below \$5,000,000 in total investment, an error of greater than \$5,000,000 would indicate the model isn't very useful. 
+The standard deviation of the total project investment is quite high while the distribution is right skewed. The costs of an error depend on the context in which the model is being used. If the model is the only thing being used to project costs and investment for affordable housing then errors could be quite costly since there are limited funds for affordable housing and this is a crucial expenditure for the well-being of many DC residents. If the model is simply being used as one tool for analysis and more as a check on the reasonableness of investment then errors will be less costly. Regardless, given that most projects fall below \$5,000,000 in total investment, an error of greater than \$5,000,000 would indicate the model is not very accurate for most observations, but this would still be a reasonably good error in relation to the total range of the observations. 
 
 ### 2. Coming up with models
 
@@ -474,7 +474,7 @@ Predictor variables were chosen based on their potential to impact the cost of a
 
 **Model 1**
 
-For KNN all predictor variables must be continuous.
+This model specification will use K-Nearest Neighbors as the algorithm. For KNN all predictor variables must be continuous and all must be normalized as one of the preprocessing steps. The *K* hyperparameter will be set using grid search for a range of potential values.
 
 Predictor variables: 
 
@@ -488,13 +488,11 @@ Predictor variables:
 - Three Bedroom Units
 - Four+ Bedroom Units
 - Studio Units
-
-Preprocessing: 
-Algorithm: K-Nearest Neighbors
-Hyperparameters:
 
 **Model 2**
 
+This model specification will use a CART algorithm. All variables will have missing values imputed as part of the preprocessing.
+
 Predictor variables: 
 
 - Incentive Name
@@ -511,13 +509,11 @@ Predictor variables:
 - Studio Units
 - DC residents employed
 - Number of certified small businesses served
-
-Preprocessing:
-Algorithm:
-Hyperparameters:
 
 **Model 3**
 
+This model specification will use a Random Forest algorithm. So that observations are not ignored, all variables will have missing values imputed as part of the preprocessing. The hyperparameter for number of trees will be tuned to determine the optimal number of trees. 
+
 Predictor variables: 
 
 - Incentive Name
@@ -535,16 +531,7 @@ Predictor variables:
 - DC residents employed
 - Number of certified small businesses served
 
-Preprocessing:
-Algorithm:
-Hyperparameters:
-
-• State the predictor variables included in the model and necessary preprocessing for each variable
-• Use at least least two different types of preprocessing
-• Use at least two different algorithms (i.e. linear regression, KNN, CART, random forest).
-• Use at least one algorithm with hyperparameters. Your first specification should be an algorithm
-with a hyperparameter(s).
-
+### 3. Estimation
 
 
 
