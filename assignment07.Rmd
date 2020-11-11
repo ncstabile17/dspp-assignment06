@@ -309,7 +309,7 @@ The data set is the same one used for Assignment 04, and includes information on
 
 The goal of this supervised machine learning application is to predict the total DC government investment in a given project based on project factors including affordable housing units, affordability levels, number of bedrooms, and others. This could be used by District government employees to estimate how much they should expect to contribute for future projects. It could also be used by advocates to flag potentially suspicious allocations of funds based on the expected level of government contribution. 
 
-### Data Cleaning
+#### Data cleaning
 ```{r warning = FALSE, message = FALSE, results = FALSE}
 
 # Making the variable names easier to work with 
@@ -376,8 +376,176 @@ dc_housing_investment <- dc_housing_investment %>%
 
 ```
 
+#### Splitting data set
+```{r}
+
+set.seed(20201109)
+# create a split object
+housing_investment_split <- initial_split(data = dc_housing_investment, prop = 0.75)
+# create the training and testing data
+housing_investment_train <- training(x = housing_investment_split)
+housing_investment_test <- testing(x = housing_investment_split)
+
+```
+
+#### Exploratory data analysis
+
+```{r}
+
+housing_investment_train %>%
+  ggplot(aes(x = total_affordable, y = total_proj_investment)) +
+  geom_point() +
+  labs(title = "Total Investment by Affordable Units") +
+  scale_y_continuous(labels = comma) +
+  theme_minimal()
+
+housing_investment_train %>%
+  ggplot(aes(x = three_br, y = total_proj_investment)) +
+  geom_point() +
+  labs(title = "Total Investment by Three Bedroom Units") +
+  scale_y_continuous(labels = comma) +
+  theme_minimal()
+
+housing_investment_train %>%
+  ggplot(aes(x = ami_30, y = total_proj_investment)) +
+  geom_point() +
+  labs(title = "Total Investment by Units at 30% AMI") +
+  scale_y_continuous(labels = comma) +
+  theme_minimal()
+
+housing_investment_train %>% 
+  ggplot(mapping = aes(
+    x = ward, 
+    y = total_proj_investment,
+    )) +
+  geom_dotplot( 
+    binaxis='y', 
+    stackdir='center', 
+    binwidth = 2000000) +
+  scale_y_continuous(labels = comma) +
+  stat_summary(fun.y=median, geom="point", shape=18,
+                 size=3, color="red") +
+  labs(
+    x = "Ward",
+    y = "Total Project Investment",
+    title = "Total Project Investment by Ward"
+  )
+
+housing_investment_train %>% 
+  ggplot(mapping = aes(
+    x = incentive_name, 
+    y = total_proj_investment,
+    )) +
+  geom_dotplot( 
+    binaxis='y', 
+    stackdir='center', 
+    binwidth = 1000000) +
+  scale_y_continuous(labels = comma) +
+  stat_summary(fun.y=median, geom="point", shape=18,
+                 size=3, color="red") +
+  labs(
+    x = "Incentive Name",
+    y = "Total Project Investment",
+    title = "Total Project Investment by Incentive"
+  ) +
+  coord_flip()
+
+```
+#### Error metric
+```{r}
+
+housing_investment_train %>% summarize(sd(total_proj_investment),
+                                       quantile(total_proj_investment))
+
+housing_investment_train %>% 
+  ggplot() + 
+  geom_histogram(aes(x = total_proj_investment), 
+                 binwidth = 1000000) + 
+  scale_x_continuous(labels = comma)
+
+```
+Since this is a regression application with a continuous target variable, I will be using root mean square error (RMSE) as my error metric. As compared to mean absolute error RMSE will give somewhat more weight to outliers. 
+
+The standard deviation of the total project investment is quite high while the distribution is right skewed. The costs of an error depend on the context in which the model is being used. If the model is the only thing being used to project costs and investment for affordable housing then errors could be quite costly since there are limited funds for affordable housing and this is a crucial expenditure for the well-being of many DC residents. If the model is simply being used as one tool for analysis and more as a check on the reasonableness of investment then errors will be less costly. Regardless, given that most projects fall below \$5,000,000 in total investment, an error of greater than \$5,000,000 would indicate the model isn't very useful. 
+
+### 2. Coming up with models
+
+Predictor variables were chosen based on their potential to impact the cost of a project or the value to the DC government.
+
+**Model 1**
+
+For KNN all predictor variables must be continuous.
+
+Predictor variables: 
+
+- Total Affordable Units
+- 30% AMI Units
+- 50% AMI Units
+- 60% AMI Units
+- 80% AMI Units
+- One Bedroom Units
+- Two Bedroom Units
+- Three Bedroom Units
+- Four+ Bedroom Units
+- Studio Units
+
+Preprocessing: 
+Algorithm: K-Nearest Neighbors
+Hyperparameters:
+
+**Model 2**
+
+Predictor variables: 
+
+- Incentive Name
+- Ward
+- Total Affordable Units
+- 30% AMI Units
+- 50% AMI Units
+- 60% AMI Units
+- 80% AMI Units
+- One Bedroom Units
+- Two Bedroom Units
+- Three Bedroom Units
+- Four+ Bedroom Units
+- Studio Units
+- DC residents employed
+- Number of certified small businesses served
+
+Preprocessing:
+Algorithm:
+Hyperparameters:
+
+**Model 3**
+
+Predictor variables: 
+
+- Incentive Name
+- Ward
+- Total Affordable Units
+- 30% AMI Units
+- 50% AMI Units
+- 60% AMI Units
+- 80% AMI Units
+- One Bedroom Units
+- Two Bedroom Units
+- Three Bedroom Units
+- Four+ Bedroom Units
+- Studio Units
+- DC residents employed
+- Number of certified small businesses served
+
+Preprocessing:
+Algorithm:
+Hyperparameters:
+
+• State the predictor variables included in the model and necessary preprocessing for each variable
+• Use at least least two different types of preprocessing
+• Use at least two different algorithms (i.e. linear regression, KNN, CART, random forest).
+• Use at least one algorithm with hyperparameters. Your first specification should be an algorithm
+with a hyperparameter(s).
 
 
-### Exploratory Data Analysis
+
 
 
