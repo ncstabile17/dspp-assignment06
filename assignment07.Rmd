@@ -17,7 +17,7 @@ library(vip)
 
 ### Creating the data set
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 
 # use this url to download the data directly into R
 df <- read_csv("https://data.cityofnewyork.us/api/views/43nn-pn8j/rows.csv")
@@ -72,7 +72,7 @@ write_csv(sampled_df, "restaurant_grades.csv")
 
 ### 1. Estimate a model
 
-```{r}
+```{r message = FALSE, warning = FALSE}
 set.seed(20201020)
 
 # create a split object
@@ -424,7 +424,7 @@ housing_investment_train %>%
     stackdir='center', 
     binwidth = 2000000) +
   scale_y_continuous(labels = comma) +
-  stat_summary(fun.y=median, geom="point", shape=18,
+  stat_summary(fun=median, geom="point", shape=18,
                  size=3, color="red") +
   labs(
     x = "Ward",
@@ -442,7 +442,7 @@ housing_investment_train %>%
     stackdir='center', 
     binwidth = 1000000) +
   scale_y_continuous(labels = comma) +
-  stat_summary(fun.y=median, geom="point", shape=18,
+  stat_summary(fun=median, geom="point", shape=18,
                  size=3, color="red") +
   labs(
     x = "Incentive Name",
@@ -452,6 +452,7 @@ housing_investment_train %>%
   coord_flip()
 
 ```
+
 #### Error metric
 ```{r}
 
@@ -465,6 +466,7 @@ housing_investment_train %>%
   scale_x_continuous(labels = comma)
 
 ```
+
 Since this is a regression application with a continuous target variable, I will be using root mean square error (RMSE) as my error metric. As compared to mean absolute error RMSE will give somewhat more weight to outliers. 
 
 The standard deviation of the total project investment is quite high while the distribution is right skewed. The costs of an error depend on the context in which the model is being used. If the model is the only thing being used to project costs and investment for affordable housing then errors could be quite costly since there are limited funds for affordable housing and this is a crucial expenditure for the well-being of many DC residents. If the model is simply being used as one tool for analysis and more as a check on the reasonableness of investment then errors will be less costly. Regardless, given that most projects fall below \$5,000,000 in total investment, an error of greater than \$5,000,000 would indicate the model is not very accurate for most observations, but this would still be a reasonably good error in relation to the total range of the observations. 
@@ -475,7 +477,7 @@ Predictor variables were chosen based on their potential to impact the cost of a
 
 **Model 1**
 
-This model specification will use K-Nearest Neighbors as the algorithm. For KNN all predictor variables must be continuous and all must be normalized as one of the preprocessing steps. The *K* hyperparameter will be set using grid search for a range of potential values.
+This model specification will use K-Nearest Neighbors as the algorithm. For KNN all predictor variables must be continuous and all must be normalized as one of the preprocessing steps. The *K* hyperparameter will be set using a tuning grid for a range of potential values.
 
 Predictor variables: 
 
