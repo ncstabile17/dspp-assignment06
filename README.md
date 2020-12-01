@@ -1,4 +1,4 @@
-# dspp assignment06 and assignment07
+# Machine learning | Assignment06 and Assignment07
 
 ## Overview
 
