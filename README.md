@@ -1,4 +1,4 @@
-# Machine learning | Assignment06 and Assignment07
+# Machine learning | Assignment06 and Assignment07 | Data Science for Public Policy
 
 ## Overview
 
